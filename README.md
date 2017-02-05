@@ -46,6 +46,23 @@ def accumulator(to_user):
 1. 编写自己的对话逻辑，类似demo_dialog.py
 2. 在服务器代码中用wechat.bot.answer(post_data, dialog_module)获取相应的回复
 
+# 存在的问题
+
+这里用重现消息的方式来保存会话状态，所以在会话过程中做数据改动要慎重，比如
+
+```python
+answer = yield xxx
+<write database>
+answer = yield xxx
+```
+
+在重现过程中<write database>会被多次执行，可能导致重复数据插入。
+
+解决的办法：
+*  写操作统一在return的时候做
+*  写操作尽量用UPDATE不要用INSERT，避免重复插入
+*  直接用singleton代替redis，在进程内存中存储generator，不过这样就不适用prefork多进程的服务器..
+
 相关博客：
 *  http://www.jianshu.com/p/974cf38291ec
 *  http://blog.arthurmao.me/2017/02/python-redis-wechat-dialog
