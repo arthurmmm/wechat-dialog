@@ -1,7 +1,7 @@
 # wechat-dialogs
 一个微信公众号处理复杂会话的轮子，使用python generator和redis管理对话上下文
 
-概况的讲，你只需要写下面这种代码：
+比如你只需要写下面这种代码：
 
 ```python
 def accumulator(to_user):
