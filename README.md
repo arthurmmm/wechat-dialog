@@ -58,8 +58,8 @@ def accumulator(to_user):
 想一下这个场景：当公众号让用户回复YES或者NO的时候，用户回复了一个START会怎么样呢？
 
 现在有两种处理方式：   
-1.  回复一个信息告诉用户他的输入有误，让他重新输入。 --- 这个通过return实现
-2.  直接找一下是否有逻辑处理START这条信息。 --- 这个通过raise UnexpectAnswer实现
+1.  回复一个信息告诉用户他的输入有误，让他重新输入。 --- 这个通过return实现   
+2.  直接找一下是否有逻辑处理START这条信息。 --- 这个通过raise UnexpectAnswer实现   
 
 # 应用到其他项目
 
