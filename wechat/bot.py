@@ -13,6 +13,12 @@ dialog_module = None
 hkey = None
 redis_db = None
 
+class UnexpectAnswer(Exception):
+    ''' Raise it if user gives an unexpected answer
+    Then this answer will be regarded as a start of new dialog
+    '''
+    pass
+
 def _redis_replay(key, dialog):
     ''' Replay dialog based on redis history
     '''
@@ -22,7 +28,7 @@ def _redis_replay(key, dialog):
     else:
         hist = json.loads(hist.decode('utf-8'))[1:]
     for step in hist:
-        dialog.send(step)
+        dialog.send((step, True))
     return dialog
         
 def _redis_send(key, dialog, msg, expire=60):
@@ -38,7 +44,7 @@ def _redis_send(key, dialog, msg, expire=60):
     hist.append(msg)
     redis_db.setex(key, expire, json.dumps(hist))
     logger.debug(dialog)
-    return dialog.send(msg)
+    return dialog.send((msg, False))
     
 
 def _new_dialog(msg_type, msg_content, to_user):
@@ -107,12 +113,21 @@ def answer(data, module):
             logger.error('会话记录错误..重新创建会话..')
             dialog = _new_dialog(msg_type, msg_content, to_user)
     # 发送消息
-    try:
-        type, msg = _redis_send(hkey, dialog, msg_content)
-    except StopIteration as e:
-        # 会话已结束，删去redis中的记录
-        type, msg = e.value
-        redis_db.delete(hkey)
+    while True:
+        try:
+            type, msg = _redis_send(hkey, dialog, msg_content)
+            break
+        except StopIteration as e:
+            # 会话已结束，删去redis中的记录
+            type, msg = e.value
+            redis_db.delete(hkey)
+            break
+        except UnexpectAnswer:
+            # 用户发送了一个不合法的回复时抛出这个异常
+            # BOT会认为用户希望开启一段新的会话
+            redis_db.delete(hkey)
+            dialog = _new_dialog(msg_type, msg_content, to_user)
+            continue
     
     wechat_reply = getattr(reply, type)
     print(wechat_reply(
